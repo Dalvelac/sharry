@@ -126,8 +126,10 @@ object Queries {
   ): ConnectionIO[Option[Option[Password]]] = {
     val sId = "s" :: RShare.Columns.id
     val sPass = "s" :: RShare.Columns.password
+    val sMaxViews = "s" :: RShare.Columns.maxViews
     val pShare = "p" :: RPublishShare.Columns.shareId
     val pId = "p" :: RPublishShare.Columns.id
+    val pViews = "p" :: RPublishShare.Columns.views
     val fShare = "f" :: RShareFile.Columns.shareId
     val fId = "f" :: RShareFile.Columns.id
     val pEnable = "p" :: RPublishShare.Columns.enabled
@@ -138,7 +140,13 @@ object Queries {
       fr"INNER JOIN" ++ RShareFile.table ++ fr"f ON" ++ fShare.is(sId)
 
     def cond(now: Timestamp) =
-      Seq(pId.is(sharePublic), fId.is(fileId), pEnable.is(true), pUntil.isGt(now))
+      Seq(
+        pId.is(sharePublic),
+        fId.is(fileId),
+        pEnable.is(true),
+        pUntil.isGt(now),
+        sMaxViews.isGt(pViews)
+      )
 
     for {
       now <- Timestamp.current[ConnectionIO]
